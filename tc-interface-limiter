@@ -1,0 +1,21 @@
+#!/bin/bash
+read -p "Enter network interface : " IF_INET
+read -p "Enter egress speed in mbits : " EGRESS
+read -p "Enter ingress speed in mbits : " INGRESS
+read -p "Enter burst in kbits : " BURST
+read -p "Enter latency in ms : " LATENCY
+
+tc qdisc del dev ${IF_INET} root
+tc qdisc del dev ${IF_INET} ingress
+tc qdisc add dev ${IF_INET} ingress
+
+tc qdisc add dev ${IF_INET} root tbf rate ${EGRESS}mbit burst ${BURST}kbit latency ${LATENCY}ms
+tc filter add dev ${IF_INET} protocol ip ingress prio 2 u32 match ip dst 0.0.0.0/0 action police rate ${INGRESS}mbit burst ${BURST}kbit
+tc filter add dev ${IF_INET} protocol ip ingress prio 2 u32 match ip src 0.0.0.0/0 action police rate ${INGRESS}mbit burst ${BURST}kbit
+
+echo -e "\nSettings Saved"
+echo -e "Interface : $IF_INET"
+echo -e "Egress : $EGRESS mbit"
+echo -e "Ingress : $INGRESS mbit"
+echo -e "Burst : $BURST kbit"
+echo -e "Latency : $LATENCY ms"
